@@ -12,8 +12,16 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-volatile int autoColor = 1;
-volatile int effectNo = 0;
+struct Masks {
+	unsigned int autoColor:1,
+				 effectNo:3,
+				 blinkingCounter:8,
+				 debouncingModeCounter:8,
+				 debouncingEffectCounter:8,
+				 switchModeDebouncing:1,
+				 switchEffectDebouncing:1;
+};
+volatile struct Masks masks = {1, 0, 0, 0, 0, 0, 0};
 
 int main(void) {
 	DDRB |= 1<<LED_RED;//set PB1 as output
@@ -46,50 +54,52 @@ int main(void) {
 
 	turnOffLights();
 
-	TCCR0 |= 1<<CS01 | 1<<CS00;
+	TCCR0 |= 1<<CS01 | 1<<CS00;//set prescaler 64x
 	TIMSK |= 1<<TOIE0;
 
 	while (1) {
-		PORTB ^= 1<<LED_RED_BLINKING;
 
-		if (autoColor % 2) {
-			_delay_ms(200);
-		} else {
-			_delay_ms(100);
-		}
 	}
 
 	return 0;
 }
 
 ISR(INT0_vect) {
-	autoColor++;
-	effectNo = 0;
+	if (masks.switchModeDebouncing == 0) {
+		masks.autoColor++;
+		masks.effectNo = 0;
+		masks.switchModeDebouncing = 1;
+		masks.debouncingModeCounter = 0;
+	}
 }
 
 ISR(INT1_vect) {
-	effectNo = ++effectNo % 4;
-	setUpEffects(effectNo);
+	if (masks.switchEffectDebouncing == 0) {
+		masks.effectNo = ++masks.effectNo % 4;
+		setUpEffects(masks.effectNo);
+		masks.switchEffectDebouncing = 1;
+		masks.debouncingEffectCounter = 0;
+	}
 }
 
 ISR(ADC_vect) {
 	switch (ADMUX & 0x0F) {
 	case 0x00:
-		if (autoColor % 2 == 0) {
+		if (masks.autoColor == 0) {
 			OCR1B = ADCH;
 		}
 		ADMUX = (ADMUX & 0xF0) | 0x01;//set ADC1
 		break;
 
 	case 0x01:
-		if (autoColor % 2 == 0) {
+		if (masks.autoColor == 0) {
 			OCR2 = ADCH;
 		}
 		ADMUX = (ADMUX & 0xF0) | 0x02;//set ADC2
 		break;
 
 	case 0x02:
-		if (autoColor % 2 == 0) {
+		if (masks.autoColor == 0) {
 			OCR1A = ADCH;
 		}
 		ADMUX &= 0xF0;//set ADC0
@@ -100,8 +110,22 @@ ISR(ADC_vect) {
 }
 
 ISR(TIMER0_OVF_vect) {
-	if (autoColor % 2) {
-		switch (effectNo) {
+	masks.blinkingCounter++;
+	masks.debouncingEffectCounter++;
+	masks.debouncingModeCounter++;
+	if ((masks.autoColor == 1 && masks.blinkingCounter >= 12) || (masks.autoColor == 0 && masks.blinkingCounter >= 6)) {
+		masks.blinkingCounter = 0;
+		PORTB ^= 1<<LED_RED_BLINKING;
+	}
+	if (masks.switchModeDebouncing && masks.debouncingModeCounter >= 6) {
+		masks.switchModeDebouncing = 0;
+	}
+	if (masks.switchEffectDebouncing && masks.debouncingEffectCounter >= 6) {
+		masks.switchEffectDebouncing = 0;
+	}
+
+	if (masks.autoColor) {
+		switch (masks.effectNo) {
 		case 0:
 			effectStarting();
 			break;
@@ -114,8 +138,8 @@ ISR(TIMER0_OVF_vect) {
 			effectSnake();
 			break;
 
-		default:
 		case 3:
+		default:
 			effectFlame();
 			break;
 		}
