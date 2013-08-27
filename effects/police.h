@@ -2,10 +2,8 @@
 #define POLICE_H_
 
 #include <avr/io.h>
+#include "../animate.h"
 
-int effectPoliceSgn = 1;
-
-void effectPolice(void);
-void effectPoliceSetUp(void);
+void effectPolice(struct Animate *a);
 
 #endif

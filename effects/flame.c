@@ -1,14 +1,11 @@
 #include "flame.h"
 
-void effectFlame(void) {
-	int yellow[3] = {255, rand() % 51 + 75, rand() % 20 + 1};
+void effectFlame(struct Animate *a) {
+	int yellow[3] = {255, rand() % 51 + 75, rand() % 10 + 1};
 	int red = rand() % 16 + 240;
 
-	OCR1A = (yellow[0] + red) / 2;
-	OCR1B = yellow[1];
-	OCR2 = yellow[2];
-}
-
-void effectFlameSetUp(void) {
-
+	if (a->open) {
+		setAnimate(a, (yellow[0] + red) / 2, yellow[1], yellow[2], 0, 15);
+	}
+	nextStep(a);
 }

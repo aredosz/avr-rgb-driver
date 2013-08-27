@@ -2,9 +2,8 @@
 #define STARTING_H_
 
 #include <avr/io.h>
+#include "../animate.h"
 
-void effectStarting(void);
-int effectStartingIncrement(int value);
-void effectStartingSetUp(void);
+void effectStarting(struct Animate *a);
 
 #endif

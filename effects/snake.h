@@ -2,10 +2,10 @@
 #define SNAKE_H_
 
 #include <avr/io.h>
+#include "../animate.h"
 
-volatile int snakeRising = 1;
+volatile int snakeIndex = 0;
 
-void effectSnake(void);
-void effectSnakeSetUp(void);
+void effectSnake(struct Animate *a);
 
 #endif

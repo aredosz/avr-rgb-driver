@@ -3,8 +3,8 @@
 
 #include <avr/io.h>
 #include <stdlib.h>
+#include "../animate.h"
 
-void effectFlame(void);
-void effectFlameSetUp(void);
+void effectFlame(struct Animate *a);
 
 #endif

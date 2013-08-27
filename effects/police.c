@@ -1,17 +1,12 @@
 #include "police.h"
 
-void effectPolice(void) {
-	if (OCR1A == 0) {
-		effectPoliceSgn = -1;
-	} else if (OCR1A == 255) {
-		effectPoliceSgn = 1;
+void effectPolice(struct Animate *a) {
+	if (a->open) {
+		if (a->r == 255) {
+			setAnimate(a, 0, 0, 255, 0, 65);
+		} else {
+			setAnimate(a, 255, 0, 0, 0, 65);
+		}
 	}
-
-	OCR1A -= effectPoliceSgn;
-	OCR2 += effectPoliceSgn;
-}
-
-void effectPoliceSetUp(void) {
-	turnOffLights();
-	OCR1A = 255;
+	nextStep(a);
 }

@@ -11,17 +11,11 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include "animate.h"
+#include "masks.h"
 
-struct Masks {
-	unsigned int autoColor:1,
-				 effectNo:3,
-				 blinkingCounter:8,
-				 debouncingModeCounter:8,
-				 debouncingEffectCounter:8,
-				 switchModeDebouncing:1,
-				 switchEffectDebouncing:1;
-};
 volatile struct Masks masks = {1, 0, 0, 0, 0, 0, 0};
+volatile struct Animate animate = {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
 
 int main(void) {
 	DDRB |= 1<<LED_RED;//set PB1 as output
@@ -75,8 +69,7 @@ ISR(INT0_vect) {
 
 ISR(INT1_vect) {
 	if (masks.switchEffectDebouncing == 0) {
-		masks.effectNo = ++masks.effectNo % 4;
-		setUpEffects(masks.effectNo);
+		masks.effectNo = ++masks.effectNo % 5;
 		masks.switchEffectDebouncing = 1;
 		masks.debouncingEffectCounter = 0;
 	}
@@ -127,21 +120,24 @@ ISR(TIMER0_OVF_vect) {
 	if (masks.autoColor) {
 		switch (masks.effectNo) {
 		case 0:
-			effectStarting();
+			effectStarting(&animate);
 			break;
 
 		case 1:
-			effectPolice();
+			effectPolice(&animate);
 			break;
 
 		case 2:
-			effectSnake();
+			effectSnake(&animate);
 			break;
 
 		case 3:
-		default:
-			effectFlame();
+			effectFlame(&animate);
 			break;
+
+		case 4:
+		default:
+			effectGYRMBC(&animate);
 		}
 	}
 }

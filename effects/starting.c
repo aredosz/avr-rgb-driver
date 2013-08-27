@@ -1,18 +1,8 @@
 #include "starting.h"
 
-void effectStarting(void) {
-	OCR1A = effectStartingIncrement(OCR1A);
-	OCR1B = effectStartingIncrement(OCR1B);
-	OCR2 = effectStartingIncrement(OCR2);
-}
-
-int effectStartingIncrement(int value) {
-	if (value < 255) {
-		return value + 1;
+void effectStarting(struct Animate *a) {
+	if (a->open) {
+		setAnimate(a, 255, 255, 255, 0, 65);
 	}
-	return value;
-}
-
-void effectStartingSetUp(void) {
-	turnOffLights();
+	nextStep(a);
 }
